@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Search Form</title>
+</head>
+<body>
+
+    <form action="/" method="GET">
+        <label for="searchQuery">Search:</label>
+        <input type="text" id="searchQuery" name="searchQuery" required>
+        
+        <label for="k">Max results:</label>
+        <select id="k" name="k">
+            <option value="10">20</option>
+            <option value="20">50</option>
+            <option value="30">100</option>
+        </select>
+        
+        <button type="submit">Submit</button>
+    </form>
+    
+    {% if results %}
+        <div>
+            {% for key, value in results.items() %}
+                <div>
+                    <p>{{ value['name'] }}</p>
+                    <img src="{{ url_for('static', filename=value['location']) }}" alt="Image" width="300">
+                    <p>{{ value['label'] }} : {{ value['score'] }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+</body>
+</html>
