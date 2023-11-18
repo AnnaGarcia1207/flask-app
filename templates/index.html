@@ -3,35 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Search Form</title>
+    <title>CS734 - DataViz Explorer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
 </head>
 <body>
+    <div class="topnav">
+        <a class="active" href="#home">DataViz Explorer</a>
+    </div>
 
-    <form action="/" method="GET">
-        <label for="searchQuery">Search:</label>
-        <input type="text" id="searchQuery" name="searchQuery" required>
-        
-        <label for="k">Max results:</label>
-        <select id="k" name="k">
-            <option value="10">20</option>
-            <option value="20">50</option>
-            <option value="30">100</option>
-        </select>
-        
-        <button type="submit">Submit</button>
-    </form>
+    <div class="form-container">
+        <!-- Text Search Form -->
+        <form action="/" method="POST" class="text-search-form">
+            <input type="text" id="searchQuery" name="searchQuery" placeholder="Search for visualizations.." >
+            <button type="submit">Search</button>
+        </form>
+
+        <!-- Image Upload Form -->
+        <form action="/upload" method="POST" enctype="multipart/form-data" class="image-upload-form">
+            <input type="file" id="imageUpload" name="imageUpload" hidden onchange="submitForm()"/>
+            <label for="imageUpload">Upload and Search</label>
+
+        </form>
+    </div>
     
-    {% if results %}
-        <div>
-            {% for key, value in results.items() %}
-                <div>
-                    <p>{{ value['name'] }}</p>
-                    <img src="{{ url_for('static', filename=value['location']) }}" alt="Image" width="300">
-                    <p>{{ value['label'] }} : {{ value['score'] }}</p>
-                </div>
-            {% endfor %}
+    <!-- Results -->
+    <div id="results">
+        <div class="result-grid">
+            {% if results %}
+                {% for key, value in results.items() %}
+                    <div class="result-item">
+                        <p>{{ value['name'] }}</p>
+                        <img src="{{ url_for('static', filename=value['location']) }}" alt="Image" width="300">
+                        <p>{{ value['label'] }} : {{ value['score'] }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
         </div>
-    {% endif %}
+    </div>
 
+    <script>
+        function submitForm() {
+            document.querySelector('.image-upload-form').submit();
+        }
+    </script>
 </body>
 </html>

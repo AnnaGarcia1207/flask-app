@@ -71,61 +71,6 @@ def flatten_embedding(embedding):
     return embedding
 
 
-# def connect():
-#     try:
-#         elastic_search = Elasticsearch("https://localhost:9200",
-#         basic_auth=("elastic", "3_q9X3DGNLs7_9jT3U-h"),
-#         ca_certs="C:/Users/annaa/elasticsearch-8.10.4-windows-x86_64/elasticsearch-8.10.4/config/certs/http_ca.crt")
-#     except ConnectionError as e:
-#         print("Connection Error ElasticSearch: ", e)
-    
-#     if elastic_search.ping():
-#         return elastic_search
-#     else:
-#         print("Check if elasticsearch is up and running")
-
-# def get_model_info(model_ID, device):
-#       # save the model to device
-#   model = CLIPModel.from_pretrained(model_ID).to(device)
-
-#   # Get the processor
-#   processor = CLIPProcessor.from_pretrained(model_ID)
-
-#   # get the tokenizer
-#   tokenizer = CLIPTokenizer.from_pretrained(model_ID)
-
-#   return model, processor, tokenizer
-
-# def search_text_embeddings(elastic_search, embedding_vector, k):
-#     source_fields = ['id', 'label', 'location']
-#     query = {
-#         "field": "text_embeddings",
-#         "query_vector": embedding_vector,
-#         "k": 2,
-#         "num_candidates": 10
-#     }
-#     try:
-#         response = elastic_search.knn_search(index="scifig-pilot", knn=query, source=source_fields)
-#         print(response)
-#         return response['hits']['hits']
-
-#     except exceptions.RequestError as e:
-#         print(e.message)
-#         print("\n")
-#         print(e)
-#         print(f"Error: {e.info['error']['root_cause'][0]['reason']}")
-    
-
-# def process_text_query(es, input_query):
-#    inputs = tokenizer(input_query, return_tensors="pt").to(device)
-#    text_embeddings = model.get_text_features(**inputs)
-#    embeddings_as_numpy = text_embeddings.cpu().detach().numpy().reshape(-1)
-
-#    search_results = search_text_embeddings(es, embeddings_as_numpy,2)
-
-
-#    return search_results
-
 
 if __name__ == "__main__":
     main()
