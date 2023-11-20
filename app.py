@@ -9,12 +9,6 @@ from PIL import Image
 
 app = Flask(__name__)
 
-# elastic_search = Elasticsearch(
-#     "https://localhost:9200",
-#     basic_auth=("elastic", "3_q9X3DGNLs7_9jT3U-h"),
-#     ca_certs="C:/Users/annaa/elasticsearch-8.10.4-windows-x86_64/elasticsearch-8.10.4/config/certs/http_ca.crt"
-# )
-
 config_file_path = "config.json"
 
 with open(config_file_path, 'r') as file:
