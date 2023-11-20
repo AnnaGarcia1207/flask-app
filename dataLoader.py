@@ -6,26 +6,41 @@ import ast
 import numpy as np
 from transformers import CLIPProcessor, CLIPModel, CLIPTokenizer
 import torch
+import json
 
 
 
 def main():
+    config_file_path = "config.json"
+
+    with open(config_file_path, 'r') as file:
+        config = json.load(file)
+
+    CLOUD_ID = config['elasticsearch']['cloud_id']
+    ELASTIC_USERNAME = config['elasticsearch']['username']
+    ELASTIC_PASSWORD = config['elasticsearch']['password']
+    CERT_FINGERPRINT = config['elasticsearch']['cert_fingerprint']
     
     try:
-        elastic_search = Elasticsearch("https://localhost:9200",
-        basic_auth=("elastic", "3_q9X3DGNLs7_9jT3U-h"),
-        ca_certs="C:/Users/annaa/elasticsearch-8.10.4-windows-x86_64/elasticsearch-8.10.4/config/certs/http_ca.crt")
+        elastic_search = Elasticsearch(
+            cloud_id=CLOUD_ID,  
+            basic_auth=(ELASTIC_USERNAME, ELASTIC_PASSWORD),
+            ssl_assert_fingerprint=CERT_FINGERPRINT
+            )
+        # elastic_search = Elasticsearch("https://localhost:9200",
+        # basic_auth=("elastic", "3_q9X3DGNLs7_9jT3U-h"),
+        # ca_certs="C:/Users/annaa/elasticsearch-8.10.4-windows-x86_64/elasticsearch-8.10.4/config/certs/http_ca.crt")
     except ConnectionError as e:
         print("Connection Error ElasticSearch: ", e)
     
     if elastic_search.ping():
-        None
+        print("Connected to elasticsearch successfully!")
     else:
         print("Check if elasticsearch is up and running")
     
 
     # read the csv
-    df = pd.read_csv("C:/Users/annaa/workspace/flask/embeddingsv6.csv")
+    df = pd.read_csv("./dataframes/scifig-pilot_text_img_embeddings_complete.csv")
     # convert the str type vectors to array
     df['text_embeddings'] = df['text_embeddings'].apply(string_to_list)
     df['img_embeddings'] = df['img_embeddings'].apply(string_to_list)

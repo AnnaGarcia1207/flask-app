@@ -1,18 +1,21 @@
 from PIL import Image
 import pandas as pd
 import os
+from elasticsearch import Elasticsearch, exceptions
+import json
+import ssl
 
-def file_exists(file_path):
-    return os.path.exists(file_path)
+# def file_exists(file_path):
+#     return os.path.exists(file_path)
 
 
-path = "C:/Users/annaa/workspace/flask/localImagePath.csv"
+# path = "C:/Users/annaa/workspace/flask/localImagePath.csv"
 
-df = pd.read_csv(path)
+# df = pd.read_csv(path)
 
-df['file_exists'] = df['localImagePath'].apply(file_exists)
+# df['file_exists'] = df['localImagePath'].apply(file_exists)
 
-df.to_csv("df_1.csv", index=False)
+# df.to_csv("df_1.csv", index=False)
 
 # print(df.columns)
 
@@ -59,3 +62,30 @@ df.to_csv("df_1.csv", index=False)
 
 
 # ---------------------------------------------------------------------
+
+config_file_path = "config.json"
+
+with open(config_file_path, 'r') as file:
+    config = json.load(file)
+
+CLOUD_ID = config['elasticsearch']['cloud_id']
+ELASTIC_USERNAME = config['elasticsearch']['username']
+ELASTIC_PASSWORD = config['elasticsearch']['password']
+CERT_FINGERPRINT = config['elasticsearch']['cert_fingerprint']
+# api_creds=(config['elasticsearch']['id'], config['elasticsearch']['api_key'])
+
+# es = Elasticsearch(['https://xxxxxxxxxxxxxxxxxxxxxxxxxxx.us-east-1.aws.found.io:9243'], api_key=(api['id'],api['api_key']))
+try:    
+    client = Elasticsearch(
+        cloud_id=CLOUD_ID,
+        basic_auth=(ELASTIC_USERNAME, ELASTIC_PASSWORD),
+        ssl_assert_fingerprint=CERT_FINGERPRINT
+    )
+    print(client.info())
+except ConnectionError as e:
+     print("Connection Error ElasticSearch: ", e)
+
+if client.ping():
+      print("DOOONEEE!")
+else:
+      print("NOOOOOOOOOOOOO Check if elasticsearch is up and running")

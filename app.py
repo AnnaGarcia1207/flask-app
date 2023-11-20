@@ -9,11 +9,37 @@ from PIL import Image
 
 app = Flask(__name__)
 
-elastic_search = Elasticsearch(
-    "https://localhost:9200",
-    basic_auth=("elastic", "3_q9X3DGNLs7_9jT3U-h"),
-    ca_certs="C:/Users/annaa/elasticsearch-8.10.4-windows-x86_64/elasticsearch-8.10.4/config/certs/http_ca.crt"
-)
+# elastic_search = Elasticsearch(
+#     "https://localhost:9200",
+#     basic_auth=("elastic", "3_q9X3DGNLs7_9jT3U-h"),
+#     ca_certs="C:/Users/annaa/elasticsearch-8.10.4-windows-x86_64/elasticsearch-8.10.4/config/certs/http_ca.crt"
+# )
+
+config_file_path = "config.json"
+
+with open(config_file_path, 'r') as file:
+    config = json.load(file)
+
+CLOUD_ID = config['elasticsearch']['cloud_id']
+ELASTIC_USERNAME = config['elasticsearch']['username']
+ELASTIC_PASSWORD = config['elasticsearch']['password']
+CERT_FINGERPRINT = config['elasticsearch']['cert_fingerprint']
+
+
+try:
+    elastic_search = Elasticsearch(
+        cloud_id=CLOUD_ID,  
+        basic_auth=(ELASTIC_USERNAME, ELASTIC_PASSWORD),
+        ssl_assert_fingerprint=CERT_FINGERPRINT
+        )
+except ConnectionError as e:
+    print("Connection Error ElasticSearch: ", e)
+
+if elastic_search.ping():
+    print("Connected to elasticsearch successfully!")
+else:
+    print("EXCEPTION: Check if elasticsearch is up and running")
+
 
 def get_model_info(model_ID, device):
       # save the model to device
