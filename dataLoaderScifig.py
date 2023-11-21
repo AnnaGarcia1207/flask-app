@@ -1,9 +1,9 @@
 from elasticsearch import Elasticsearch, exceptions
-from indexMapping import indexMapping
+from indexMappingScifig import indexMappingScifig
 import pandas as pd
 import ast
-import numpy as np
 import json
+import datetime
 
 
 
@@ -34,7 +34,7 @@ def main():
     
 
     # read the csv
-    df = pd.read_csv("./dataframes/scifig-pilot_text_img_embeddings_complete.csv")
+    df = pd.read_csv("./dataframes/scifig_embeddings_scores.csv")
     # convert the str type vectors to array
     df['text_embeddings'] = df['text_embeddings'].apply(string_to_list)
     df['img_embeddings'] = df['img_embeddings'].apply(string_to_list)
@@ -45,7 +45,7 @@ def main():
 
     
     # create index in elastic search
-    index_name = "scifig-pilot"
+    index_name = "scifig"
 
     # # Delete the index if it already exists
     if elastic_search.indices.exists(index=index_name):
@@ -53,7 +53,7 @@ def main():
         print(f"Index '{index_name}' deleted.")
 
 
-    elastic_search.indices.create(index=index_name, mappings=indexMapping)
+    elastic_search.indices.create(index=index_name, mappings=indexMappingScifig)
 
     # # turn dataframe into dictionary
     data_dict = df.to_dict("records")
@@ -82,17 +82,7 @@ def flatten_embedding(embedding):
 
 
 if __name__ == "__main__":
+    print(f"Started : {datetime.datetime.now()}")
     main()
     print("Data is loaded!")
-    # Set the device
-    # device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    # model_ID = "openai/clip-vit-base-patch32"
-
-    # model, processor, tokenizer = get_model_info(model_ID, device)
-
-    # index_name = "scifig-pilot"
-
-    # es = connect()
-
-    # process_text_query(es, "bar graph")
+    print(f"Ended : {datetime.datetime.now()}")

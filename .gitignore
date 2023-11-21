@@ -7,3 +7,4 @@ venv/
 dataframes/
 config.json
 elastic-ece-ca-cert.pem
+.vscode/
