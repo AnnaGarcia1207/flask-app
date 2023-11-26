@@ -2,8 +2,52 @@ from PIL import Image
 import pandas as pd
 import os
 from elasticsearch import Elasticsearch, exceptions
-import json
-import ssl
+import shutil
+
+import pandas as pd
+import shutil
+import datetime
+
+# Load your DataFrame with image paths
+df = pd.read_csv("dataframes\scifig_embeddings_scores.csv")
+
+# Specify the destination folder where you want to copy the images
+destination_folder = "D:\images\png"
+
+batch_size = 100
+
+for batch_start in range(0, len(df), batch_size):
+    batch_df = df.iloc[batch_start:batch_start + batch_size]
+    for index, row in batch_df.iterrows():
+        source_path = row['external_drive_path']
+        destination_path = os.path.join(destination_folder, os.path.basename(source_path))
+        
+        # Copy the image from source to destination
+        shutil.copy(source_path, destination_path)
+    
+    # Get the current timestamp
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:")
+    
+    print(f"[{timestamp}]: Processed {batch_start + len(batch_df)} rows")
+
+
+# df = pd.read_csv("dataframes\scifig_embeddings_scores.csv")
+
+# result = df.head(1)
+
+# destination_folder = "D:\images\png"
+
+# source_path = "D:\Scifig-datasets\SciFig\png\P14-1071.pdf-Figure4.png" #result['external_drive_path']
+
+# destination_path = os.path.join(destination_folder, os.path.basename(source_path))
+
+# # Copy the image from source to destination
+# shutil.copy(source_path, destination_path)
+
+# print("DONE")
+
+
+# result.to_csv("text.txt", index=False, sep='\t')
 
 # def file_exists(file_path):
 #     return os.path.exists(file_path)
@@ -63,29 +107,32 @@ import ssl
 
 # ---------------------------------------------------------------------
 
-config_file_path = "config.json"
+# config_file_path = "config.json"
 
-with open(config_file_path, 'r') as file:
-    config = json.load(file)
+# with open(config_file_path, 'r') as file:
+#     config = json.load(file)
 
-CLOUD_ID = config['elasticsearch']['cloud_id']
-ELASTIC_USERNAME = config['elasticsearch']['username']
-ELASTIC_PASSWORD = config['elasticsearch']['password']
-CERT_FINGERPRINT = config['elasticsearch']['cert_fingerprint']
+# CLOUD_ID = config['elasticsearch']['cloud_id']
+# ELASTIC_USERNAME = config['elasticsearch']['username']
+# ELASTIC_PASSWORD = config['elasticsearch']['password']
+# CERT_FINGERPRINT = config['elasticsearch']['cert_fingerprint']
 # api_creds=(config['elasticsearch']['id'], config['elasticsearch']['api_key'])
 
 # es = Elasticsearch(['https://xxxxxxxxxxxxxxxxxxxxxxxxxxx.us-east-1.aws.found.io:9243'], api_key=(api['id'],api['api_key']))
-try:    
-    client = Elasticsearch(
-        cloud_id=CLOUD_ID,
-        basic_auth=(ELASTIC_USERNAME, ELASTIC_PASSWORD),
-        ssl_assert_fingerprint=CERT_FINGERPRINT
-    )
-    print(client.info())
-except ConnectionError as e:
-     print("Connection Error ElasticSearch: ", e)
+# try:    
+#     client = Elasticsearch(
+#         cloud_id=CLOUD_ID,
+#         basic_auth=(ELASTIC_USERNAME, ELASTIC_PASSWORD),
+#         ssl_assert_fingerprint=CERT_FINGERPRINT
+#     )
+#     print(client.info())
+# except ConnectionError as e:
+#      print("Connection Error ElasticSearch: ", e)
 
-if client.ping():
-      print("DOOONEEE!")
-else:
-      print("NOOOOOOOOOOOOO Check if elasticsearch is up and running")
+# if client.ping():
+#       print("DOOONEEE!")
+# else:
+#       print("NOOOOOOOOOOOOO Check if elasticsearch is up and running")
+
+# ---------------------------------------------------------------------
+

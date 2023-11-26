@@ -6,6 +6,7 @@ from transformers import CLIPProcessor, CLIPModel, CLIPTokenizer
 import torch
 import json
 from PIL import Image
+import ast
 
 app = Flask(__name__)
 
@@ -18,6 +19,15 @@ CLOUD_ID = config['elasticsearch']['cloud_id']
 ELASTIC_USERNAME = config['elasticsearch']['username']
 ELASTIC_PASSWORD = config['elasticsearch']['password']
 CERT_FINGERPRINT = config['elasticsearch']['cert_fingerprint']
+
+# Set the device
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model_ID = "openai/clip-vit-base-patch32"
+model = CLIPModel.from_pretrained(model_ID).to(device)
+processor = CLIPProcessor.from_pretrained(model_ID)
+tokenizer = CLIPTokenizer.from_pretrained(model_ID)
+
+index_name = "scifig" #"scifig-pilot"
 
 
 try:
@@ -35,57 +45,63 @@ else:
     print("EXCEPTION: Check if elasticsearch is up and running")
 
 
-def get_model_info(model_ID, device):
-      # save the model to device
-  model = CLIPModel.from_pretrained(model_ID).to(device)
 
-  # Get the processor
-  processor = CLIPProcessor.from_pretrained(model_ID)
 
-  # get the tokenizer
-  tokenizer = CLIPTokenizer.from_pretrained(model_ID)
 
-  return model, processor, tokenizer
-
-# Set the device
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
-model_ID = "openai/clip-vit-base-patch32"
-
-model, processor, tokenizer = get_model_info(model_ID, device)
-
-index_name = "scifig-pilot"
 
 def create_results_map(search_results):
     results = {}
     for hit in search_results:
         
+        # hit_id = hit['_id']
+        # score = hit['_score'] *100
+        # label = hit['_source']['label']
+        # location = hit['_source']['location']
+        # name = location.split('/')[-1]
+
         hit_id = hit['_id']
         score = hit['_score'] *100
         label = hit['_source']['label']
-        location = hit['_source']['location']
+        location = hit['_source']['image_path']
         name = location.split('/')[-1]
+        confidence_dict = ast.literal_eval(hit['_source']['confidence'])
+        one = confidence_dict[1]['label']
+        one_score = confidence_dict[1]['score']
 
+        two = confidence_dict[2]['label']
+        two_score = confidence_dict[2]['score']
+
+        three = confidence_dict[3]['label']
+        three_score = confidence_dict[3]['score']
 
         results[hit_id] = {
-            "score": f'{score:.2f}%',
-            "name": name,
-            "label": label,
-            "location": location 
+            "score" : f'{score:.2f}%',
+            "name" : name,
+            "label" : label,
+            "location" : location,
+            "top_1" : one,
+            "top_1_score" : one_score,
+            "top_2" : two,
+            "top_2_score" : two_score,
+            "top_3" : three,
+            "top_3_score" : three_score
         }
     
     return results
 
-def search_embeddings(embedding_vector, k, embedding_type):
-    source_fields = ['id', 'label', 'location']
+def search_embeddings(embedding_vector, embedding_type):
+    source_fields = ['Id', 'label', 'image_path', 'confidence']
+    # source_fields = ['id', 'label', 'location']
+    k = 301
+    num_candidates = 500
     query = {
         "field": embedding_type,
         "query_vector": embedding_vector,
         "k": k,
-        "num_candidates": 1001
+        "num_candidates": num_candidates
     }
     try:
-        response = elastic_search.knn_search(index="scifig-pilot", knn=query, source=source_fields)
+        response = elastic_search.knn_search(index=index_name, knn=query, source=source_fields)
         print(response)
         return response['hits']['hits']
 
@@ -93,20 +109,19 @@ def search_embeddings(embedding_vector, k, embedding_type):
         print(f"Error: {e.info['error']['root_cause'][0]['reason']}")
     
 
-
-def process_text_query(input_query, k=99):
+def process_text_query(input_query):
    inputs = tokenizer(input_query, return_tensors="pt").to(device)
    text_embeddings = model.get_text_features(**inputs)
    embeddings_as_numpy = text_embeddings.cpu().detach().numpy().reshape(-1)
 
    # Dictionary containing : ['id', 'label', 'location']
-   search_results = search_embeddings(embeddings_as_numpy,k, "text_embeddings")
+   search_results = search_embeddings(embeddings_as_numpy, "text_embeddings")
 
    results_map = create_results_map(search_results)
 
    return results_map
 
-def process_image_query(input, k=99):
+def process_image_query(input):
     input_image = Image.open(input).convert("RGB")
     image = processor(
     text = None,
@@ -118,8 +133,7 @@ def process_image_query(input, k=99):
 
     numpy_embeddings = embeddings.cpu().detach().numpy().reshape(-1)
 
-
-    search_results = search_embeddings(numpy_embeddings,k, "img_embeddings")
+    search_results = search_embeddings(numpy_embeddings, "img_embeddings")
     results_dict = create_results_map(search_results)
 
     return results_dict
@@ -133,10 +147,9 @@ def index():
     results_dict = None
     if request.method =='POST':
         text_query = request.form.get('searchQuery')
-        k = 99 #request.form.get('k')
 
         # passed into the process_text_query and k
-        results_dict = process_text_query(text_query, k)
+        results_dict = process_text_query(text_query)
     
     return render_template("index.html", results=results_dict)
 
@@ -147,7 +160,7 @@ def upload():
     if 'imageUpload' in request.files:
         image_query = request.files['imageUpload']
 
-        results_dict = process_image_query(image_query, 99)
+        results_dict = process_image_query(image_query)
     
     return render_template("index.html", results=results_dict)
 
