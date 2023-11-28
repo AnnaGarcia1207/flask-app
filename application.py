@@ -1,24 +1,65 @@
 from flask import Flask, render_template, request
 from elasticsearch import Elasticsearch, exceptions
-import pandas as pd
-import numpy as np
 from transformers import CLIPProcessor, CLIPModel, CLIPTokenizer
 import torch
 import json
 from PIL import Image
 import ast
+import sys
+from dotenv import load_dotenv
+import os
 
-app = Flask(__name__)
+application = Flask(__name__)
 
-config_file_path = "config.json"
+# Using config file to stre creds
+# config_file_path = "config.json"
 
-with open(config_file_path, 'r') as file:
-    config = json.load(file)
+# with open(config_file_path, 'r') as file:
+#     config = json.load(file)
 
-CLOUD_ID = config['elasticsearch']['cloud_id']
-ELASTIC_USERNAME = config['elasticsearch']['username']
-ELASTIC_PASSWORD = config['elasticsearch']['password']
-CERT_FINGERPRINT = config['elasticsearch']['cert_fingerprint']
+# CLOUD_ID = config['elasticsearch']['cloud_id']
+# ELASTIC_USERNAME = config['elasticsearch']['username']
+# ELASTIC_PASSWORD = config['elasticsearch']['password']
+# CERT_FINGERPRINT = config['elasticsearch']['cert_fingerprint']
+
+# elastic_search = Elasticsearch(
+#         cloud_id=CLOUD_ID,  
+#         basic_auth=(ELASTIC_USERNAME, ELASTIC_PASSWORD),
+#         ssl_assert_fingerprint=CERT_FINGERPRINT
+#         )
+
+# Another way: Using .env to store creds -------------------------------
+# project_folder = os.path.expanduser('/') 
+# load_dotenv(os.path.join(project_folder, '.env'))
+
+
+
+
+elastic_search = None
+
+try:
+    # Your Elasticsearch operations here
+    elastic_search = Elasticsearch(
+    cloud_id= os.getenv('ES_CLOUD_ID'),
+    api_key= os.getenv('ES_API_KEY'),
+    ssl_assert_fingerprint=os.getenv('ES_SSL')
+    )
+
+except exceptions as e:
+    # Handling the exception
+    print("An error occurred:", e)
+    try:
+        # Using info() method to get information about the cluster
+        info = elastic_search.info()
+        print("Cluster info:", info)
+    except exceptions as info_error:
+        print("Error fetching cluster info:", info_error)
+
+print(elastic_search.info())
+
+# if not elastic_search.ping():
+#     print("EXCEPTION: Check if Elasticsearch is up and running")
+#     sys.exit(1) 
 
 # Set the device
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -28,26 +69,6 @@ processor = CLIPProcessor.from_pretrained(model_ID)
 tokenizer = CLIPTokenizer.from_pretrained(model_ID)
 
 index_name = "scifig" #"scifig-pilot"
-
-
-try:
-    elastic_search = Elasticsearch(
-        cloud_id=CLOUD_ID,  
-        basic_auth=(ELASTIC_USERNAME, ELASTIC_PASSWORD),
-        ssl_assert_fingerprint=CERT_FINGERPRINT
-        )
-except ConnectionError as e:
-    print("Connection Error ElasticSearch: ", e)
-
-if elastic_search.ping():
-    print("Connected to elasticsearch successfully!")
-else:
-    print("EXCEPTION: Check if elasticsearch is up and running")
-
-
-
-
-
 
 def create_results_map(search_results):
     results = {}
@@ -102,7 +123,7 @@ def search_embeddings(embedding_vector, embedding_type):
     }
     try:
         response = elastic_search.knn_search(index=index_name, knn=query, source=source_fields)
-        print(response)
+        # print(response)
         return response['hits']['hits']
 
     except exceptions.RequestError as e:
@@ -141,7 +162,7 @@ def process_image_query(input):
    
 
 
-@app.route('/', methods=['GET','POST'])
+@application.route('/', methods=['GET','POST'])
 def index():
     # grab the text query
     results_dict = None
@@ -154,7 +175,7 @@ def index():
     return render_template("index.html", results=results_dict)
 
 
-@app.route('/upload', methods=['POST'])
+@application.route('/upload', methods=['POST'])
 def upload():
     results_dict = None
     if 'imageUpload' in request.files:
@@ -165,4 +186,4 @@ def upload():
     return render_template("index.html", results=results_dict)
 
 if __name__=="__main__":
-    app.run(debug=True)
+    application.run(debug=True)

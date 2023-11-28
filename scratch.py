@@ -31,6 +31,49 @@ for batch_start in range(0, len(df), batch_size):
     print(f"[{timestamp}]: Processed {batch_start + len(batch_df)} rows")
 
 
+# import pandas as pd
+# import shutil
+# import datetime
+# import os
+# import zipfile
+
+# # Load your DataFrame with image paths
+# df = pd.read_csv("D:\\images\\dataframes\\scifig_embeddings_scores.csv")
+
+# # Specify the destination folder where you want to copy the images
+# destination_folder = "D:\\images\\imgs"
+# batch_size = 1000
+
+# def zip_files(files, zip_name):
+#     with zipfile.ZipFile(zip_name, 'w') as zipf:
+#         for file in files:
+#             zipf.write(file, os.path.basename(file))
+
+# for batch_start in range(0, len(df), batch_size):
+#     batch_df = df.iloc[batch_start:batch_start + batch_size]
+#     files_to_zip = []
+
+#     for index, row in batch_df.iterrows():
+#         source_path = row['external_drive_path']
+#         destination_path = os.path.join(destination_folder, os.path.basename(source_path))
+#         shutil.copy(source_path, destination_path)
+#         files_to_zip.append(destination_path)
+    
+#     # Create a zip file for the batch
+#     zip_name = f"{destination_folder}\\batch_{batch_start // batch_size + 1}.zip"
+#     zip_files(files_to_zip, zip_name)
+
+#     # Optional: Delete the images after zipping
+#     # for file in files_to_zip:
+#     #     os.remove(file)
+
+#     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+#     print(f"[{timestamp}]: Processed and zipped batch {batch_start // batch_size + 1}")
+
+# Remember to handle any exceptions and errors in real scenarios.
+
+
+
 # df = pd.read_csv("dataframes\scifig_embeddings_scores.csv")
 
 # result = df.head(1)
